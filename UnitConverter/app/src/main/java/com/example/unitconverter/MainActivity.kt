@@ -106,7 +106,7 @@ fun UnitConverter(modifier: Modifier,snackbarHostState: SnackbarHostState){
     var isCategoryMenuExpanded by remember { mutableStateOf(false) }
 
     //unit of length - updated in future with different Units like duration and Angle.
-    var currentUnit = unitMap[selectedCategory] ?: emptyList()
+    var currentUnit by remember(selectedCategory) { mutableStateOf(unitMap[selectedCategory] ?: emptyList()) }
 
     //used for sub dropdowns
     var selectedSourceUnit by remember { mutableStateOf(currentUnit.first()) }
@@ -124,298 +124,310 @@ fun UnitConverter(modifier: Modifier,snackbarHostState: SnackbarHostState){
     var alertMessage by remember { mutableStateOf("") }
     var alertType by remember { mutableStateOf(AlertType.INFO) }
 
+    //Box layout for the UI -  Alert
+    Box(modifier = modifier.fillMaxSize()){
 
-
-    //UI setup
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-
-        //Alert UI section
-        AnimatedVisibility(
-            visible = showAlert,
-            enter = fadeIn() + slideInVertically(),
-            exit = fadeOut() + slideOutVertically(),
-            modifier = Modifier.zIndex(1f).align(Alignment.CenterHorizontally)
-        ){
-            val backgroundColor = when (alertType) {
-                AlertType.SUCCESS -> Color(0xFF4CAF50) // Green
-                AlertType.WARNING -> Color(0xFFFFC107) // Yellow
-                AlertType.DANGER -> Color(0xFFF44336)  // Red
-                AlertType.INFO -> Color(0xFF2196F3)    // Blue
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(backgroundColor)
-                    .padding(16.dp)
-                    .clickable { showAlert = false }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color = Color.White)
+                .padding(16.dp)
+                .clickable { showAlert = false }
+        ) {
+            //Alert UI section
+            AnimatedVisibility(
+                visible = showAlert,
+                enter = fadeIn() + slideInVertically(),
+                exit = fadeOut() + slideOutVertically(),
+                modifier = Modifier.zIndex(1f).align(Alignment.TopCenter)
             ){
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ){
-                    val iconRes = when (alertType) {
-                        AlertType.SUCCESS -> Icons.Filled.CheckCircle
-                        AlertType.WARNING -> Icons.Filled.Warning
-                        AlertType.DANGER -> Icons.Filled.Close
-                        AlertType.INFO -> Icons.Filled.Info
-                    }
-                    Icon(
-                        imageVector = iconRes,
-                        contentDescription = "Alert Icon",
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = alertMessage,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close Alert",
-                        tint = Color.White,
-                        modifier = Modifier.clickable { showAlert = false }
-                    )
+                val backgroundColor = when (alertType) {
+                    AlertType.SUCCESS -> Color(0xFF4CAF50) // Green
+                    AlertType.WARNING -> Color(0xFFFFC107) // Yellow
+                    AlertType.DANGER -> Color(0xFFF44336)  // Red
+                    AlertType.INFO -> Color(0xFF2196F3)    // Blue
                 }
-                // Auto-hide the alert after 3 seconds
-                LaunchedEffect(showAlert) {
-                    if (showAlert) {
-                        delay(3000)
-                        showAlert = false
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(backgroundColor)
+                        .padding(16.dp)
+                        .clickable { showAlert = false }
+                ){
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ){
+                        val iconRes = when (alertType) {
+                            AlertType.SUCCESS -> Icons.Filled.CheckCircle
+                            AlertType.WARNING -> Icons.Filled.Warning
+                            AlertType.DANGER -> Icons.Filled.Close
+                            AlertType.INFO -> Icons.Filled.Info
+                        }
+                        Icon(
+                            imageVector = iconRes,
+                            contentDescription = "Alert Icon",
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = alertMessage,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Close Alert",
+                            tint = Color.White,
+                            modifier = Modifier.clickable { showAlert = false }
+                        )
+                    }
+                    // Auto-hide the alert after 3 seconds
+                    LaunchedEffect(showAlert) {
+                        if (showAlert) {
+                            delay(3000)
+                            showAlert = false
+                        }
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.padding(0.dp,20.dp,0.dp,20.dp))
-        ExposedDropdownMenuBox(
-            expanded = isCategoryMenuExpanded,
-            onExpandedChange = {isCategoryMenuExpanded = !isCategoryMenuExpanded}
+        //UI setup
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
         ) {
-            TextField(
-                value = selectedCategory,
-                onValueChange = {},
+
+
+            Spacer(modifier = Modifier.padding(0.dp,20.dp,0.dp,20.dp))
+            ExposedDropdownMenuBox(
+                expanded = isCategoryMenuExpanded,
+                onExpandedChange = {isCategoryMenuExpanded = !isCategoryMenuExpanded}
+            ) {
+                TextField(
+                    value = selectedCategory,
+                    onValueChange = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    readOnly = true,
+                    label = {Text("Category")},
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryMenuExpanded)
+                    }
+                )
+                ExposedDropdownMenu(
+                    expanded = isCategoryMenuExpanded,
+                    onDismissRequest = {isCategoryMenuExpanded = false }
+                ) {
+                    categories.forEach { category  ->
+                        DropdownMenuItem(text = { Text(text = category )},
+                            onClick = {
+                                selectedCategory = category
+                                currentUnit = unitMap[category] ?: emptyList()
+                                selectedSourceUnit = currentUnit.firstOrNull() ?: ""
+                                selectedTargetUnit = if (currentUnit.size > 1) currentUnit[1] else currentUnit.firstOrNull() ?: ""
+                                isCategoryMenuExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
-                readOnly = true,
-                label = {Text("Category")},
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryMenuExpanded)
-                }
-            )
-            ExposedDropdownMenu(
-                expanded = isCategoryMenuExpanded,
-                onDismissRequest = {isCategoryMenuExpanded = false }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                categories.forEach { category  ->
-                    DropdownMenuItem(text = { Text(text = category )},
-                        onClick = {
-                            selectedCategory = category
-                            currentUnit = unitMap[category] ?: emptyList()
-                            selectedSourceUnit = currentUnit.firstOrNull() ?: ""
-                            selectedTargetUnit = if (currentUnit.size > 1) currentUnit[1] else currentUnit.firstOrNull() ?: ""
-                            isCategoryMenuExpanded = false
+                //from unit selector
+                ExposedDropdownMenuBox(expanded = isSourceUnitMenuExpanded,
+                    onExpandedChange = { isSourceUnitMenuExpanded = !isSourceUnitMenuExpanded},
+                    modifier = Modifier.weight(1f)
+                )
+                {
+                    TextField(
+                        value = selectedSourceUnit ,
+                        onValueChange ={},
+                        readOnly = true,
+                        label = {Text("From unit")},
+                        modifier = Modifier
+                            .menuAnchor() //used to make the dropdown work
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = isSourceUnitMenuExpanded)
+
                         }
                     )
-                }
-            }
-        }
+                    ExposedDropdownMenu(
+                        expanded = isSourceUnitMenuExpanded,
+                        onDismissRequest = {isSourceUnitMenuExpanded = false},
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            //from unit selector
-            ExposedDropdownMenuBox(expanded = isSourceUnitMenuExpanded,
-                onExpandedChange = { isSourceUnitMenuExpanded = !isSourceUnitMenuExpanded},
-                modifier = Modifier.weight(1f)
-            )
-            {
-                TextField(
-                    value = selectedSourceUnit ,
-                    onValueChange ={},
-                    readOnly = true,
-                    label = {Text("From unit")},
-                    modifier = Modifier
-                        .menuAnchor() //used to make the dropdown work
-                        .fillMaxWidth(),
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isSourceUnitMenuExpanded)
+                        ) {
+                        currentUnit.forEach { lengthUnit ->
+                            DropdownMenuItem(
+                                text = { Text(text = lengthUnit)},
+                                onClick = {
+                                    selectedSourceUnit = lengthUnit
+                                    isSourceUnitMenuExpanded = false
+                                })
+
+                        }
 
                     }
-                )
-                ExposedDropdownMenu(
-                    expanded = isSourceUnitMenuExpanded,
-                    onDismissRequest = {isSourceUnitMenuExpanded = false},
-
-                ) {
-                    currentUnit.forEach { lengthUnit ->
-                        DropdownMenuItem(
-                            text = { Text(text = lengthUnit)},
-                            onClick = {
-                                selectedSourceUnit = lengthUnit
-                                isSourceUnitMenuExpanded = false
-                            })
-
-                    }
-
                 }
-            }
 
-            //to unit selector
-            ExposedDropdownMenuBox(expanded = isTargetUnitMenuExpanded,
-                onExpandedChange = {isTargetUnitMenuExpanded = !isTargetUnitMenuExpanded},
-                modifier = Modifier.weight(1f)
+                //to unit selector
+                ExposedDropdownMenuBox(expanded = isTargetUnitMenuExpanded,
+                    onExpandedChange = {isTargetUnitMenuExpanded = !isTargetUnitMenuExpanded},
+                    modifier = Modifier.weight(1f)
                 )
-            {
-                TextField(
-                    value = selectedTargetUnit,
-                    onValueChange ={},
-                    readOnly = true,
-                    label = {Text("To unit")},
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth(),
-                    trailingIcon = {
-                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = isTargetUnitMenuExpanded)
-                    })
-                ExposedDropdownMenu(
-                    expanded = isTargetUnitMenuExpanded,
-                    onDismissRequest = { isTargetUnitMenuExpanded = false
-                    })
                 {
-                    currentUnit.forEach { lengthUnit ->
-                        DropdownMenuItem(
-                            text = { Text(text = lengthUnit)},
-                            onClick = {
-                                selectedTargetUnit = lengthUnit
-                                isTargetUnitMenuExpanded = false
-                            })
+                    TextField(
+                        value = selectedTargetUnit,
+                        onValueChange ={},
+                        readOnly = true,
+                        label = {Text("To unit")},
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth(),
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = isTargetUnitMenuExpanded)
+                        })
+                    ExposedDropdownMenu(
+                        expanded = isTargetUnitMenuExpanded,
+                        onDismissRequest = { isTargetUnitMenuExpanded = false
+                        })
+                    {
+                        currentUnit.forEach { lengthUnit ->
+                            DropdownMenuItem(
+                                text = { Text(text = lengthUnit)},
+                                onClick = {
+                                    selectedTargetUnit = lengthUnit
+                                    isTargetUnitMenuExpanded = false
+                                })
+
+                        }
 
                     }
 
                 }
 
             }
+            Spacer(modifier = Modifier.padding(5.dp))
+            //Input field
+            OutlinedTextField(
+                value = inputValue,
+                onValueChange = {inputValue = it},
+                label = {Text(text = "Enter the value")},
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.padding(5.dp))
 
-        }
-        Spacer(modifier = Modifier.padding(5.dp))
-        //Input field
-        OutlinedTextField(
-            value = inputValue,
-            onValueChange = {inputValue = it},
-            label = {Text(text = "Enter the value")},
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.padding(5.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Convert Button
-            Button(
-                onClick = {
-                    if(inputValue.isBlank()){
-                        // Show warning for empty input
-                        handleAlert(
-                            message = "Please enter a value to convert",
-                            type = AlertType.WARNING,
-                            showAlertCallback = { showAlert = it },
-                            alertMessageCallback = { alertMessage = it },
-                            alertTypeCallback = { alertType = it }
-                        )
-
-                    }else{
-                        val conversionResult = convertUnit(
-                            category = selectedCategory,
-                            inputValue = inputValue,
-                            sourceUnit = selectedSourceUnit,
-                            targetUnit = selectedTargetUnit,
-                            showAlert = { show ->
-                                if (show) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = alertMessage,
-                                            actionLabel = "Dismiss"
-                                        )
-                                    }
-                                }
-                            },
-                            setAlertMessage = { alertMessage = it },
-                            setAlertType = { alertType = it }
-                        )
-                        result = conversionResult
-
-                        if(conversionResult != "Invalid" && conversionResult != "Unsupported category"){
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Convert Button
+                Button(
+                    onClick = {
+                        if(inputValue.isBlank()){
+                            // Show warning for empty input
                             handleAlert(
-                                message = "Conversion completed successfully!",
-                                type = AlertType.SUCCESS,
+                                message = "Please enter a value to convert",
+                                type = AlertType.WARNING,
                                 showAlertCallback = { showAlert = it },
                                 alertMessageCallback = { alertMessage = it },
                                 alertTypeCallback = { alertType = it }
                             )
+
+                        }else{
+                            val conversionResult = convertUnit(
+                                category = selectedCategory,
+                                inputValue = inputValue,
+                                sourceUnit = selectedSourceUnit,
+                                targetUnit = selectedTargetUnit,
+                                showAlert = { show ->
+                                    if (show) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = alertMessage,
+                                                actionLabel = "Dismiss"
+                                            )
+                                        }
+                                    }
+                                },
+                                setAlertMessage = { alertMessage = it },
+                                setAlertType = { alertType = it }
+                            )
+                            result = conversionResult
+
+                            if(conversionResult != "Invalid" && conversionResult != "Unsupported category"){
+                                handleAlert(
+                                    message = "Conversion completed successfully!",
+                                    type = AlertType.SUCCESS,
+                                    showAlertCallback = { showAlert = it },
+                                    alertMessageCallback = { alertMessage = it },
+                                    alertTypeCallback = { alertType = it }
+                                )
+                            }
                         }
-                    }
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(text = "Convert")
-            }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(text = "Convert")
+                }
 
-            // Clear Button
-            Button(
-                onClick = {
-                    inputValue = ""
-                    selectedCategory = categories.first()
-                    selectedSourceUnit = currentUnit.firstOrNull() ?: ""
-                    selectedTargetUnit = currentUnit.getOrNull(1) ?: ""
-                    result = ""
+                // Clear Button
+                Button(
+                    onClick = {
+                        inputValue = ""
+                        selectedCategory = categories.first()
+                        selectedSourceUnit = currentUnit.firstOrNull() ?: ""
+                        selectedTargetUnit = currentUnit.getOrNull(1) ?: ""
+                        result = ""
 
-                    handleAlert(
-                        message = "All fields have been cleared",
-                        type = AlertType.INFO,
-                        showAlertCallback = { showAlert = it },
-                        alertMessageCallback = { alertMessage = it },
-                        alertTypeCallback = { alertType = it }
+                        handleAlert(
+                            message = "All fields have been cleared",
+                            type = AlertType.INFO,
+                            showAlertCallback = { showAlert = it },
+                            alertMessageCallback = { alertMessage = it },
+                            alertTypeCallback = { alertType = it }
+                        )
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black,
+                        contentColor = Color.White
                     )
-                },
-                modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black,
-                    contentColor = Color.White
-                )
-            ) {
-                Text(text = "Clear")
+                ) {
+                    Text(text = "Clear")
+                }
             }
+
+
+            Text(
+                text = if (result.isNotBlank()) "Result: $result" else "Result: -",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                ),
+                modifier = Modifier
+                    .padding(top = 16.dp)
+                    .fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+
         }
-
-
-        Text(
-            text = if (result.isNotBlank()) "Result: $result" else "Result: -",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth(),
-            textAlign = TextAlign.Center
-        )
 
     }
 
