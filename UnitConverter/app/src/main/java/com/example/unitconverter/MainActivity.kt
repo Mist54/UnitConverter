@@ -63,23 +63,44 @@ import com.example.unitconverter.ui.theme.UnitConverterTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
-
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdSize
+import androidx.compose.foundation.layout.height
+import android.util.Log
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.RequestConfiguration
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val testDeviceIds = listOf("B3EEABB8EE11C2BE770B684D95219ECB")
+
+        MobileAds.setRequestConfiguration(
+            RequestConfiguration.Builder()
+                .setTestDeviceIds(testDeviceIds)
+                .build()
+        )
+        MobileAds.initialize(this){Log.d("AdMobInit", "AdMob initialized with test device ID: B3EEABB8EE11C2BE770B684D95219ECB")}
         enableEdgeToEdge()
         setContent {
             UnitConverterTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
                 Scaffold(
-                    topBar = { TopAppBar(title = { Text("Unit converter") })},
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-                ){
-                    paddingValues ->
-                    UnitConverter(modifier = Modifier.padding(paddingValues),
-                        snackbarHostState = snackbarHostState)
+                    topBar = { TopAppBar(title = { Text("Unit converter") }) },
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+                    bottomBar = {
+                        BannerAd()
+                    }
+                ) { paddingValues ->
+                    UnitConverter(
+                        modifier = Modifier.padding(paddingValues),
+                        snackbarHostState = snackbarHostState
+                    )
                 }
             }
         }
@@ -89,6 +110,38 @@ class MainActivity : ComponentActivity() {
 
 
 }
+
+@Composable
+fun BannerAd() {
+    AndroidView(
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = "ca-app-pub-3940256099942544/6300978111"  // Google test banner ad unit ID
+                // Test Ad Unit ID
+                adListener = object : AdListener() {
+                    override fun onAdLoaded() {
+                        Log.d("AdMob", "Ad loaded successfully")
+                    }
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        Log.e("AdMob", "Ad failed to load: ${error.message} | Code: ${error.code}")
+                        Log.w("AdMob", "Use this device as a test device by calling:")
+                        Log.w("AdMob", "RequestConfiguration.Builder().setTestDeviceIds(listOf(\"${AdRequest.DEVICE_ID_EMULATOR}\"))")
+                    }
+                }
+
+
+
+                loadAd(AdRequest.Builder().build())
+            }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+            .background(Color.Black)
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UnitConverter(modifier: Modifier,snackbarHostState: SnackbarHostState){
