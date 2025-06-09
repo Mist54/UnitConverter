@@ -19,3 +19,27 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+
+# --- KEEP NECESSARY CLASSES FOR COMPOSE ---
+-keep class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+
+# --- KEEP KOTLIN METADATA ---
+-keep class kotlin.Metadata { *; }
+
+# --- KEEP ANNOTATIONS ---
+-keepattributes *Annotation*
+
+# --- REMOVE LOG STATEMENTS IN RELEASE ---
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+    public static *** w(...);
+    public static *** e(...);
+}
+
+# --- OBFUSCATE SOURCE INFO ---
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
